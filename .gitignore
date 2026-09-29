@@ -21,3 +21,6 @@ backend/verify_migrations.db
 .idea/
 .DS_Store
 Thumbs.db
+
+# Setup/install logs
+*.log
