@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL Operational Database ─────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: scm_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-supply_chain}
+      POSTGRES_USER: ${POSTGRES_USER:-scm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scm_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Host port is overridable (POSTGRES_HOST_PORT) for machines where 5432
+      # is already taken; containers always talk to postgres:5432 internally.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scm_user} -d ${POSTGRES_DB:-supply_chain}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - scm_network
+
+  # ─── Hindsight Long-Term Agent Memory ────────────────────────────
+  # Official image: ghcr.io/vectorize-io/hindsight (Docker Hub "vectorize/hindsight" does not exist).
+  # Embedded pg0 database lives in /home/hindsight/.pg0 (container runs as UID 1000).
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:latest
+    container_name: scm_hindsight
+    shm_size: "1g"
+    environment:
+      HINDSIGHT_API_HOST: "0.0.0.0"
+      HINDSIGHT_API_PORT: "8888"
+      HINDSIGHT_API_WORKER_ID: "hindsight-scm"
+      # Default "none" = keyless mode: the image refuses to boot without an LLM
+      # API key, so with no GOOGLE_API_KEY we run chunk-based memory + local
+      # embeddings (fully functional, no LLM). Set HINDSIGHT_LLM_PROVIDER=google
+      # and GOOGLE_API_KEY in .env to switch to Gemini-backed memory.
+      HINDSIGHT_API_LLM_PROVIDER: ${HINDSIGHT_LLM_PROVIDER:-none}
+      HINDSIGHT_API_LLM_API_KEY: ${GOOGLE_API_KEY:-}
+      HINDSIGHT_API_LLM_MODEL: ${HINDSIGHT_LLM_MODEL:-gemini-1.5-flash}
+    ports:
+      - "8888:8888"   # Memory API (used by the backend)
+      - "9999:9999"   # Control Plane web UI
+    volumes:
+      - hindsight_data:/home/hindsight/.pg0
+    healthcheck:
+      # The image ships neither curl nor wget; probe with the bundled Python.
+      # /health = readiness (checks the embedded database).
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=5)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - scm_network
+
+  # ─── FastAPI + LangGraph Backend ─────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scm_backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-scm_user}:${POSTGRES_PASSWORD:-scm_password}@postgres:5432/${POSTGRES_DB:-supply_chain}
+      HINDSIGHT_BASE_URL: http://hindsight:8888
+      HINDSIGHT_BANK_ID: ${HINDSIGHT_BANK_ID:-supply-chain-memory}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost:80"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hindsight:
+        condition: service_healthy
+    healthcheck:
+      # python:3.11-slim has neither curl nor wget, so probe with Python.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - scm_network
+    volumes:
+      - ./backend:/app
+
+  # ─── React Frontend ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scm_frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - scm_network
+
+volumes:
+  postgres_data:
+  hindsight_data:
+
+networks:
+  scm_network:
+    driver: bridge

@@ -1,0 +1,23 @@
+# Secrets and local configuration
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Local databases and build artifacts
+*.db
+*.sqlite3
+backend/verify_migrations.db
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

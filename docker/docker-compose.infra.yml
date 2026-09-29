@@ -1,0 +1,60 @@
+# Infrastructure only stack: PostgreSQL + Hindsight.
+#
+# Use this when you want to run the backend and the frontend natively on the
+# host (with hot reload) while the stateful services stay containerized:
+#
+#   docker compose -f docker/docker-compose.infra.yml up -d
+#
+# The full application stack remains in the root docker-compose.yml.
+
+name: scm-infra
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: scm_postgres_dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-supply_chain}
+      POSTGRES_USER: ${POSTGRES_USER:-scm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scm_password}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - scm_infra_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scm_user} -d ${POSTGRES_DB:-supply_chain}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  hindsight:
+    # Official image from the Vectorize registry (see docker/README.md).
+    image: ghcr.io/vectorize-io/hindsight:latest
+    container_name: scm_hindsight_dev
+    shm_size: "1g"
+    environment:
+      HINDSIGHT_API_HOST: "0.0.0.0"
+      HINDSIGHT_API_PORT: "8888"
+      HINDSIGHT_API_WORKER_ID: "hindsight-scm-dev"
+      # Keyless default ("none"); the image refuses to boot without an LLM key.
+      HINDSIGHT_API_LLM_PROVIDER: ${HINDSIGHT_LLM_PROVIDER:-none}
+      HINDSIGHT_API_LLM_API_KEY: ${GOOGLE_API_KEY:-}
+      HINDSIGHT_API_LLM_MODEL: ${HINDSIGHT_LLM_MODEL:-gemini-1.5-flash}
+    ports:
+      - "8888:8888"   # Memory API
+      - "9999:9999"   # Control Plane web UI
+    volumes:
+      - scm_infra_hindsight:/home/hindsight/.pg0
+    healthcheck:
+      # No curl/wget in the image; use the bundled Python interpreter.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=5)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  scm_infra_postgres:
+  scm_infra_hindsight:

@@ -1,0 +1,839 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+
+  <title>Agentic AI Supply Chain Disruption Monitoring System</title>
+
+  <goal>
+    Build a complete production-style AI-powered supply chain disruption
+    monitoring and mitigation system. The system must detect disruptions,
+    analyze their impact, recommend mitigation actions, require human approval,
+    and use Hindsight as the long-term memory of previous disruption events,
+    decisions, and outcomes.
+  </goal>
+
+  <important_instruction>
+    Build the complete working application, not a mockup or static prototype.
+    Use real application logic, persistent storage, working APIs, working
+    agent workflows, and a functional frontend.
+    Do not invent metrics, reviews, statistics, customer numbers, or performance
+    claims. If data is simulated, clearly label it as simulated.
+  </important_instruction>
+
+  <!-- ====================================================== -->
+  <!-- ARCHITECTURE -->
+  <!-- ====================================================== -->
+
+  <architecture>
+
+    <frontend>
+      <technology>React</technology>
+      <language>TypeScript</language>
+      <styling>Tailwind CSS</styling>
+
+      <requirements>
+        Build a professional supply-chain operations dashboard.
+        Include:
+        - Dashboard
+        - Disruption monitoring
+        - Disruption details
+        - Impact analysis
+        - Mitigation recommendations
+        - Approval workflow
+        - Supplier information
+        - Inventory information
+        - Purchase orders
+        - Analytics
+        - Historical memory
+        - Agent reasoning/explainability
+        - Simulator
+      </requirements>
+    </frontend>
+
+    <backend>
+      <technology>FastAPI</technology>
+      <language>Python</language>
+
+      <responsibilities>
+        - REST API
+        - Database operations
+        - Supply-chain monitoring
+        - Disruption processing
+        - Agent orchestration
+        - Hindsight integration
+        - Human approval workflow
+        - Alert generation
+        - Historical experience retrieval
+      </responsibilities>
+    </backend>
+
+    <agent_orchestration>
+      <technology>LangGraph</technology>
+
+      <agents>
+
+        <agent name="Supply Chain Monitoring">
+          Monitor supplier, inventory, logistics, and external conditions.
+        </agent>
+
+        <agent name="Disruption Detection">
+          Detect abnormal events and determine whether they represent
+          meaningful supply-chain disruptions.
+        </agent>
+
+        <agent name="Inventory and Demand Analysis">
+          Calculate inventory coverage, demand pressure, stockout risk,
+          and expected supply gaps.
+        </agent>
+
+        <agent name="Impact Assessment">
+          Determine the operational impact of the disruption, including
+          inventory risk, delivery risk, and business impact.
+        </agent>
+
+        <agent name="Alternative Supplier and Mitigation">
+          Evaluate possible suppliers and mitigation strategies.
+          This agent must use Hindsight recall to retrieve relevant
+          previous disruption experiences and successful or unsuccessful
+          mitigation decisions.
+        </agent>
+
+        <agent name="Alert and Response Planning">
+          Generate actionable alerts and prepare a response plan.
+        </agent>
+
+        <agent name="Reviewer">
+          Review the proposed decision, evidence, confidence, and
+          historical context before presenting the recommendation
+          for human approval.
+        </agent>
+
+      </agents>
+    </agent_orchestration>
+
+  </architecture>
+
+
+  <!-- ====================================================== -->
+  <!-- DATABASE -->
+  <!-- ====================================================== -->
+
+  <database>
+
+    <technology>PostgreSQL</technology>
+
+    <purpose>
+      PostgreSQL is the operational database for the current state of
+      the supply chain.
+    </purpose>
+
+    <entities>
+
+      <entity name="Supplier">
+        Store supplier information, capabilities, lead time, reliability,
+        location, and status.
+      </entity>
+
+      <entity name="InventoryItem">
+        Store current inventory quantity, demand rate, safety stock,
+        reorder information, and related supplier information.
+      </entity>
+
+      <entity name="PurchaseOrder">
+        Store purchase orders, quantities, expected delivery dates,
+        supplier information, and status.
+      </entity>
+
+      <entity name="DisruptionCase">
+        Store currently active and resolved disruption cases.
+      </entity>
+
+      <entity name="Alert">
+        Store generated alerts and their status.
+      </entity>
+
+      <entity name="ApprovalRequest">
+        Store recommendations waiting for human approval and their
+        approval/rejection status.
+      </entity>
+
+    </entities>
+
+    <important>
+      Do not use PostgreSQL as the long-term AI memory system.
+      PostgreSQL stores current operational truth.
+      Hindsight stores long-term experiential memory.
+    </important>
+
+  </database>
+
+
+  <!-- ====================================================== -->
+  <!-- HINDSIGHT -->
+  <!-- ====================================================== -->
+
+  <hindsight>
+
+    <purpose>
+      Hindsight is the long-term memory layer for the AI agents.
+      It must store previous disruption experiences, agent decisions,
+      mitigation actions, and outcomes so future decisions can use
+      historical experience.
+    </purpose>
+
+    <deployment>
+      <method>Docker</method>
+      <mode>Local self-hosted</mode>
+      <network>
+        Hindsight runs locally on the same laptop as the project.
+      </network>
+    </deployment>
+
+    <memory_types>
+
+      <memory>
+        Previous disruption events.
+      </memory>
+
+      <memory>
+        Agent decisions and recommendations.
+      </memory>
+
+      <memory>
+        Mitigation actions.
+      </memory>
+
+      <memory>
+        Human approval or rejection.
+      </memory>
+
+      <memory>
+        Final outcome of the disruption.
+      </memory>
+
+      <memory>
+        Supplier-specific historical behavior.
+      </memory>
+
+    </memory_types>
+
+    <workflow>
+
+      <step>
+        When a disruption is resolved, retain the important experience
+        in Hindsight.
+      </step>
+
+      <step>
+        When a new disruption is detected, retrieve relevant historical
+        experiences using recall.
+      </step>
+
+      <step>
+        Pass recalled experiences to the Alternative Supplier and
+        Mitigation Agent.
+      </step>
+
+      <step>
+        Use the historical information together with current SQL data
+        to produce the recommendation.
+      </step>
+
+    </workflow>
+
+    <important>
+      Use Hindsight as the long-term memory system.
+      Do not create another database specifically for long-term agent memory.
+    </important>
+
+    <llm>
+      Do not introduce a separate LLM solely for explanations unless it
+      is actually required by the selected Hindsight configuration.
+      The current project does not require a dedicated LLM explanation layer.
+    </llm>
+
+  </hindsight>
+
+
+  <!-- ====================================================== -->
+  <!-- DATA FLOW -->
+  <!-- ====================================================== -->
+
+  <system_flow>
+
+    <step number="1">
+      Collect current supplier, inventory, logistics, weather, and
+      operational information.
+    </step>
+
+    <step number="2">
+      Store current operational information in PostgreSQL.
+    </step>
+
+    <step number="3">
+      Supply Chain Monitoring Agent continuously checks the current state.
+    </step>
+
+    <step number="4">
+      Disruption Detection Agent identifies abnormal or disruptive events.
+    </step>
+
+    <step number="5">
+      Inventory and Demand Analysis Agent calculates stock coverage
+      and potential shortages.
+    </step>
+
+    <step number="6">
+      Impact Assessment Agent determines the severity and business impact.
+    </step>
+
+    <step number="7">
+      Alternative Supplier and Mitigation Agent calls Hindsight recall
+      to retrieve similar historical experiences.
+    </step>
+
+    <step number="8">
+      The mitigation agent combines:
+      current SQL data +
+      current disruption information +
+      recalled Hindsight experiences.
+    </step>
+
+    <step number="9">
+      Generate mitigation recommendations.
+    </step>
+
+    <step number="10">
+      Reviewer Agent checks the recommendation and supporting evidence.
+    </step>
+
+    <step number="11">
+      Alert and Response Planning Agent generates an actionable alert.
+    </step>
+
+    <step number="12">
+      Human reviews and approves or rejects the recommendation.
+    </step>
+
+    <step number="13">
+      Execute only approved actions.
+      Never automatically switch suppliers or place purchases without
+      explicit human approval.
+    </step>
+
+    <step number="14">
+      After the disruption is resolved, retain the disruption,
+      decision, action, approval, and outcome in Hindsight.
+    </step>
+
+  </system_flow>
+
+
+  <!-- ====================================================== -->
+  <!-- EXAMPLE -->
+  <!-- ====================================================== -->
+
+  <example>
+
+    <scenario>
+      Supplier ABC reports a 10-day delivery delay.
+    </scenario>
+
+    <current_data>
+      Inventory = 25 tonnes.
+      Daily demand = 5 tonnes.
+      Current inventory coverage = 5 days.
+      Delayed shipment arrives after the expected stockout.
+    </current_data>
+
+    <hindsight>
+      Search previous experiences involving Supplier ABC and similar
+      steel delivery disruptions.
+    </hindsight>
+
+    <decision>
+      Identify suitable alternative suppliers and mitigation strategies.
+      Consider both current supplier information and historical outcomes.
+    </decision>
+
+    <approval>
+      Present the recommendation to the human operator.
+    </approval>
+
+    <outcome>
+      After resolution, store the actual outcome as a new Hindsight memory.
+    </outcome>
+
+  </example>
+
+
+  <!-- ====================================================== -->
+  <!-- HINDSIGHT LEARNING DEMONSTRATION -->
+  <!-- ====================================================== -->
+
+  <learning_demo>
+
+    <objective>
+      Clearly demonstrate that the system improves its recommendations
+      through historical experience.
+    </objective>
+
+    <first_event>
+      Introduce a disruption for Supplier ABC.
+      The system has no relevant previous experience.
+      Generate a recommendation and store the final outcome.
+    </first_event>
+
+    <second_event>
+      Trigger another similar disruption involving Supplier ABC.
+      Hindsight should retrieve the previous experience.
+    </second_event>
+
+    <visible_result>
+      Show the operator:
+      - Previous disruption
+      - Previous recommendation
+      - Previous outcome
+      - Retrieved memory
+      - Current disruption
+      - Updated recommendation
+    </visible_result>
+
+  </learning_demo>
+
+
+  <!-- ====================================================== -->
+  <!-- API -->
+  <!-- ====================================================== -->
+
+  <api>
+
+    <endpoint method="GET" path="/suppliers">
+      Return suppliers.
+    </endpoint>
+
+    <endpoint method="GET" path="/inventory">
+      Return current inventory.
+    </endpoint>
+
+    <endpoint method="GET" path="/purchase-orders">
+      Return purchase orders.
+    </endpoint>
+
+    <endpoint method="GET" path="/disruptions">
+      Return disruption cases.
+    </endpoint>
+
+    <endpoint method="GET" path="/disruptions/{id}">
+      Return complete disruption details.
+    </endpoint>
+
+    <endpoint method="POST" path="/disruptions/simulate">
+      Create a controlled disruption for demonstration and testing.
+    </endpoint>
+
+    <endpoint method="POST" path="/disruptions/{id}/approve">
+      Approve a mitigation recommendation.
+    </endpoint>
+
+    <endpoint method="POST" path="/disruptions/{id}/reject">
+      Reject a mitigation recommendation.
+    </endpoint>
+
+    <endpoint method="GET" path="/disruptions/{id}/memory">
+      Return relevant Hindsight memories associated with the disruption.
+    </endpoint>
+
+    <endpoint method="GET" path="/agents/{case_id}/trace">
+      Return the explainability information for the current case.
+    </endpoint>
+
+  </api>
+
+
+  <!-- ====================================================== -->
+  <!-- FRONTEND UX -->
+  <!-- ====================================================== -->
+
+  <ui>
+
+    <design>
+      Professional enterprise supply-chain operations interface.
+      Clean, modern, technical, readable, and suitable for a hackathon
+      demonstration.
+    </design>
+
+    <navigation>
+      Use a clean sidebar or top navigation.
+      Keep navigation simple and consistent.
+    </navigation>
+
+    <dashboard>
+      Display actual values retrieved from the backend.
+      Show active disruptions, inventory risks, pending approvals,
+      affected suppliers, and recent events.
+    </dashboard>
+
+    <disruption_page>
+      Show:
+      - Event information
+      - Supplier
+      - Delay
+      - Inventory coverage
+      - Impact
+      - Risk factors
+      - Recommended mitigation
+      - Historical Hindsight memories
+      - Agent reasoning/evidence
+      - Human approval controls
+    </disruption_page>
+
+    <memory_page>
+      Show relevant historical experiences retrieved from Hindsight.
+      Make it obvious why each memory is relevant to the current case.
+    </memory_page>
+
+    <simulation_page>
+      Allow judges to trigger predefined disruption scenarios.
+      Provide scenarios such as:
+      - Supplier delay
+      - Logistics disruption
+      - Inventory shortage
+      - Weather-related disruption
+    </simulation_page>
+
+  </ui>
+
+
+  <!-- ====================================================== -->
+  <!-- DESIGN RESTRICTIONS -->
+  <!-- ====================================================== -->
+
+  <design_restrictions>
+
+    <restriction>
+      Do NOT use purple gradients.
+    </restriction>
+
+    <restriction>
+      Do NOT use pill-shaped buttons.
+      Use normal rectangular buttons with modest border radius.
+    </restriction>
+
+    <restriction>
+      Do NOT create fake reviews or testimonials.
+    </restriction>
+
+    <restriction>
+      Do NOT create fake metrics or fabricated performance statistics.
+      Every displayed metric must come from actual system data or be
+      explicitly marked as simulated/demo data.
+    </restriction>
+
+    <restriction>
+      Do NOT use emoji icons.
+      Use a consistent professional icon library if icons are required.
+    </restriction>
+
+    <restriction>
+      Do NOT use crazy scroll animations.
+      Avoid excessive animations and unnecessary motion.
+    </restriction>
+
+    <restriction>
+      Do NOT use em dashes anywhere in UI text, documentation,
+      comments, or generated content.
+    </restriction>
+
+    <restriction>
+      Do NOT make the interface look like a marketing landing page.
+      It should look like a real operational AI system.
+    </restriction>
+
+    <restriction>
+      Do NOT use fake customer logos, fake company names, fake
+      testimonials, fake awards, or fabricated statistics.
+    </restriction>
+
+  </design_restrictions>
+
+
+  <!-- ====================================================== -->
+  <!-- DATA -->
+  <!-- ====================================================== -->
+
+  <data>
+
+    <requirement>
+      Provide realistic simulated supply-chain data for development
+      and demonstration.
+    </requirement>
+
+    <requirement>
+      Clearly mark simulated data inside the UI where appropriate.
+    </requirement>
+
+    <requirement>
+      Create enough suppliers, inventory items, purchase orders,
+      and disruption scenarios to demonstrate the complete workflow.
+    </requirement>
+
+    <requirement>
+      Do not present simulated data as real-world data.
+    </requirement>
+
+  </data>
+
+
+  <!-- ====================================================== -->
+  <!-- SECURITY -->
+  <!-- ====================================================== -->
+
+  <security>
+
+    <requirements>
+      - Store secrets in environment variables.
+      - Never hardcode API keys.
+      - Validate all API inputs.
+      - Implement basic authentication/authorization structure
+        where appropriate.
+      - Do not expose database credentials to the frontend.
+      - Do not expose internal Hindsight configuration to the frontend.
+    </requirements>
+
+  </security>
+
+
+  <!-- ====================================================== -->
+  <!-- DOCKER -->
+  <!-- ====================================================== -->
+
+  <docker>
+
+    <services>
+
+      <service name="frontend">
+        React/Vite frontend.
+      </service>
+
+      <service name="backend">
+        FastAPI + LangGraph backend.
+      </service>
+
+      <service name="postgres">
+        PostgreSQL operational database.
+      </service>
+
+      <service name="hindsight">
+        Self-hosted Hindsight service for long-term agent memory.
+      </service>
+
+    </services>
+
+    <requirement>
+      Create a docker-compose.yml that starts all required services.
+    </requirement>
+
+    <requirement>
+      Configure service-to-service networking through Docker Compose.
+    </requirement>
+
+  </docker>
+
+
+  <!-- ====================================================== -->
+  <!-- PROJECT STRUCTURE -->
+  <!-- ====================================================== -->
+
+  <project_structure>
+
+    <structure>
+      frontend/
+      backend/
+        agents/
+        api/
+        database/
+        models/
+        services/
+        hindsight/
+        workflows/
+        utils/
+        tests/
+      docker/
+      scripts/
+      docker-compose.yml
+      .env.example
+      README.md
+    </structure>
+
+  </project_structure>
+
+
+  <!-- ====================================================== -->
+  <!-- TESTING -->
+  <!-- ====================================================== -->
+
+  <testing>
+
+    <requirements>
+      Write tests for:
+      - Database operations
+      - Inventory calculations
+      - Disruption detection
+      - Impact assessment
+      - Supplier comparison
+      - Hindsight retain
+      - Hindsight recall
+      - Agent workflow
+      - Approval workflow
+      - API endpoints
+    </requirements>
+
+    <requirement>
+      Include an end-to-end test that simulates a disruption,
+      generates a recommendation, approves it, records the outcome,
+      and verifies that the experience is retained in Hindsight.
+    </requirement>
+
+  </testing>
+
+
+  <!-- ====================================================== -->
+  <!-- OBSERVABILITY -->
+  <!-- ====================================================== -->
+
+  <explainability>
+
+    <requirement>
+      Every recommendation must show the evidence and reasoning
+      used by the agents.
+    </requirement>
+
+    <requirement>
+      Clearly distinguish:
+      - Current SQL data
+      - Retrieved Hindsight memories
+      - Agent conclusions
+      - Human decision
+    </requirement>
+
+    <requirement>
+      The UI must make the Hindsight contribution visible.
+    </requirement>
+
+  </explainability>
+
+
+  <!-- ====================================================== -->
+  <!-- DEVELOPMENT REQUIREMENTS -->
+  <!-- ====================================================== -->
+
+  <development>
+
+    <requirement>
+      Start by inspecting the complete existing project if source code
+      is provided. Preserve useful existing functionality instead of
+      unnecessarily rewriting it.
+    </requirement>
+
+    <requirement>
+      Integrate Hindsight into the existing architecture rather than
+      rebuilding the entire system around Hindsight.
+    </requirement>
+
+    <requirement>
+      Do not create redundant long-term memory tables when Hindsight
+      is being used for that purpose.
+    </requirement>
+
+    <requirement>
+      Keep PostgreSQL for operational state.
+    </requirement>
+
+    <requirement>
+      Keep Hindsight for long-term experiential memory.
+    </requirement>
+
+    <requirement>
+      Keep human approval before consequential supply-chain actions.
+    </requirement>
+
+    <requirement>
+      Make every feature functional before adding visual polish.
+    </requirement>
+
+    <requirement>
+      After implementation, run the backend tests, frontend build,
+      Docker Compose startup, database migrations, and end-to-end
+      disruption simulation.
+    </requirement>
+
+    <requirement>
+      Fix all errors encountered during testing.
+    </requirement>
+
+  </development>
+
+
+  <!-- ====================================================== -->
+  <!-- FINAL DEMONSTRATION -->
+  <!-- ====================================================== -->
+
+  <demo>
+
+    <scenario>
+      Demonstrate the following complete sequence:
+    </scenario>
+
+    <sequence>
+      1. Supplier ABC experiences a delivery delay.
+      2. Monitoring detects the disruption.
+      3. Inventory agent calculates the remaining stock coverage.
+      4. Impact agent determines the expected shortage.
+      5. Mitigation agent searches Hindsight.
+      6. Relevant historical experience is displayed.
+      7. Alternative suppliers are evaluated.
+      8. Recommendation is generated.
+      9. Reviewer checks the recommendation.
+      10. Human approves the recommendation.
+      11. Disruption is resolved.
+      12. Final outcome is retained in Hindsight.
+      13. Trigger a similar disruption again.
+      14. Hindsight recalls the previous experience.
+      15. The system demonstrates how historical experience influences
+          the new recommendation.
+    </sequence>
+
+    <objective>
+      The final demonstration must clearly prove that Hindsight provides
+      persistent long-term memory and that the AI system can use previous
+      operational experiences to improve future decision-making.
+    </objective>
+
+  </demo>
+
+
+  <!-- ====================================================== -->
+  <!-- FINAL OUTPUT -->
+  <!-- ====================================================== -->
+
+  <deliverables>
+
+    <item>Complete source code</item>
+    <item>React frontend</item>
+    <item>FastAPI backend</item>
+    <item>LangGraph agent workflow</item>
+    <item>PostgreSQL database</item>
+    <item>Local Dockerized Hindsight integration</item>
+    <item>Database migrations</item>
+    <item>Seed/demo data</item>
+    <item>Automated tests</item>
+    <item>Docker Compose configuration</item>
+    <item>.env.example</item>
+    <item>Complete README with setup instructions</item>
+    <item>Architecture documentation</item>
+    <item>End-to-end demo instructions</item>
+
+  </deliverables>
+
+</project>

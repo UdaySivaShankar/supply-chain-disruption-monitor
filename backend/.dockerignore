@@ -1,0 +1,7 @@
+# Keep secrets, local state and the virtualenv out of the build context/image.
+.venv
+.env
+*.db
+__pycache__
+.pytest_cache
+tests
